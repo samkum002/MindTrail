@@ -212,15 +212,15 @@ from IntelliJ IDEA or VS Code.
 
 | Method | Endpoint | Description |
 |---------|----------|-------------|
-| POST | /auth/register | Register User |
-| POST | /auth/login | Login |
-| POST | /habit | Add Habit |
-| GET | /habit | Get Habits |
-| POST | /mood | Record Mood |
-| GET | /mood | Get Mood History |
-| GET | /dashboard | Dashboard Analytics |
+| POST | /public/register | Register User |
+| POST | /user/login | Login |
+| POST | /user/habit | Add Habit |
+| GET | /habit/show | Get Habits |
+| POST | /user/mood | Record Mood |
+| GET | /user/show/mood | Get Mood History |
+| GET | /habit/dashboard | Dashboard Analytics |
 
-> Endpoint names may vary slightly depending on the latest implementation.
+> Some Extra Endpoints might be visible due to previous implementation but hold no value in the current features.
 
 ---
 
