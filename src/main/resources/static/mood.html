@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Record Mood</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: linear-gradient(to right, #b6e388, #7fc97f);
+    text-align: center;
+}
+
+.container {
+    width: 60%;
+    margin: auto;
+}
+
+.card {
+    background: #ddd;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+}
+
+.mood-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.mood-btn {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    background: white;
+    transition: 0.3s;
+    font-weight: bold;
+}
+
+.mood-btn:hover {
+    background: green;
+    color: white;
+}
+
+.mood-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: white;
+    padding: 10px 20px;
+    margin: 10px auto;
+    border-radius: 8px;
+    width: fit-content;
+    min-width: 250px;
+    gap: 30px;
+    transition: 0.2s;
+}
+
+.mood-row:hover {
+    transform: scale(1.05);
+}
+
+.date {
+    opacity: 0.7;
+}
+
+.message {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+.success { background: #c8f7c5; color: green; }
+.error { background: #f7c5c5; color: red; }
+</style>
+</head>
+
+<body>
+
+<h1>Record Mood for Today</h1>
+
+<div class="container">
+
+    <div id="msgBox"></div>
+
+    <div class="card">
+        <h3>Select Your Mood</h3>
+
+        <div class="mood-grid">
+            <button class="mood-btn" onclick="recordMood('HAPPY')">HAPPY</button>
+            <button class="mood-btn" onclick="recordMood('SAD')">SAD</button>
+            <button class="mood-btn" onclick="recordMood('ANXIOUS')">ANXIOUS</button>
+            <button class="mood-btn" onclick="recordMood('EXCITED')">EXCITED</button>
+            <button class="mood-btn" onclick="recordMood('CALM')">CALM</button>
+            <button class="mood-btn" onclick="recordMood('STRESSED')">STRESSED</button>
+            <button class="mood-btn" onclick="recordMood('NEUTRAL')">NEUTRAL</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Your Mood History</h3>
+        <div id="moodList">Loading...</div>
+    </div>
+
+</div>
+
+<script>
+
+function showMessage(msg, type) {
+    const box = document.getElementById("msgBox");
+    box.innerHTML = `<div class="message ${type}">${msg}</div>`;
+    setTimeout(() => box.innerHTML = "", 3000);
+}
+
+function recordMood(moodName) {
+
+    fetch('/user/mood', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ mood: moodName })
+    })
+    .then(res => res.text())
+    .then(msg => {
+        showMessage(msg, msg.includes("already") ? "error" : "success");
+        loadMoods();
+    })
+    .catch(() => {
+        showMessage("Failed to record mood", "error");
+    });
+}
+
+function loadMoods() {
+    fetch('/user/show/mood', {
+        method: 'GET',
+        credentials: 'include'
+    })
+    .then(res => res.text())
+    .then(text => {
+
+        if (text.startsWith("<!DOCTYPE")) {
+            window.location.href = "/login.html";
+            return;
+        }
+
+        const data = JSON.parse(text);
+
+        let container = document.getElementById("moodList");
+        container.innerHTML = "";
+
+        if (!data.length) {
+            container.innerHTML = "<p>No moods recorded yet</p>";
+            return;
+        }
+
+        data.forEach(mood => {
+
+            let div = document.createElement("div");
+            div.className = "mood-row";
+
+            div.innerHTML = `
+                <span>${mood.mood}</span>
+                <span class="date">${mood.date}</span>
+            `;
+
+            container.appendChild(div);
+        });
+
+    })
+    .catch(() => {
+        showMessage("Failed to load moods", "error");
+    });
+}
+
+loadMoods();
+
+</script>
+
+</body>
+</html>

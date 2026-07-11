@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: linear-gradient(to right, #b6e388, #7fc97f);
+    text-align: center;
+}
+
+h1 { margin-top: 20px; }
+
+.buttons {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin: 40px 0;
+}
+
+.btn {
+    padding: 30px 60px;
+    font-size: 20px;
+    border: none;
+    border-radius: 10px;
+    background: green;
+    color: white;
+    cursor: pointer;
+}
+
+.card {
+    width: 60%;
+    margin: auto;
+    background: #ddd;
+    padding: 30px;
+    border-radius: 15px;
+}
+
+/* logout button */
+.logout-btn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background: red;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Dashboard</h1>
+
+<div class="buttons">
+    <button class="btn" onclick="location.href='habit.html'">
+        Record Habit
+    </button>
+
+    <button class="btn" onclick="location.href='mood.html'">
+        Record Mood
+    </button>
+</div>
+
+<div class="card">
+    <h2>Insights</h2>
+    <p id="insightText">Loading...</p>
+
+    <button class="logout-btn" onclick="logout()">
+        Logout
+    </button>
+</div>
+
+<script>
+
+function loadInsights() {
+    fetch('/habit/dashboard', {
+        method: 'GET',
+        credentials: 'include'
+    })
+    .then(res => res.text())
+    .then(text => {
+
+        
+        if (text.startsWith("<!DOCTYPE")) {
+            window.location.href = "/login.html";
+            return;
+        }
+
+        const data = JSON.parse(text);
+
+        document.getElementById("insightText").innerText =
+            data.track || "No insights available";
+
+    })
+    .catch(err => {
+        console.error(err);
+        document.getElementById("insightText").innerText =
+            "Failed to load insights";
+    });
+}
+
+loadInsights();
+
+
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+        loadInsights();
+    }
+});
+
+
+window.addEventListener("storage", (event) => {
+    if (event.key === "refreshDashboard") {
+        loadInsights();
+    }
+});
+
+
+function logout() {
+    fetch('/logout', {
+        method: 'POST',
+        credentials: 'include'
+    })
+    .then(() => {
+        window.location.href = "/login.html";
+    });
+}
+
+</script>
+
+</body>
+</html>

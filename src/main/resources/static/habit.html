@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Record Habit</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: linear-gradient(to right, #b6e388, #7fc97f);
+    text-align: center;
+}
+
+.container {
+    width: 60%;
+    margin: auto;
+}
+
+.card {
+    background: #ddd;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+}
+
+.habit {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 10px 15px;
+    margin-top: 10px;
+    border-radius: 8px;
+    transition: 0.4s;
+}
+
+.habit span {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 16px;
+}
+
+.habit .date {
+    opacity: 0.8;
+}
+
+.habit.fade-out {
+    opacity: 0;
+    transform: translateX(100px);
+}
+
+button {
+    padding: 8px 15px;
+    background: green;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+input {
+    padding: 10px;
+    width: 60%;
+}
+
+.message {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+.success { background: #c8f7c5; color: green; }
+.error { background: #f7c5c5; color: red; }
+</style>
+</head>
+
+<body>
+
+<h1>Record Habit</h1>
+
+<div class="container">
+
+    <div id="msgBox"></div>
+
+    <div class="card">
+        <h3>Pending Habits</h3>
+        <div id="habitList">Loading...</div>
+
+        <br>
+        <input type="text" id="habitInput" placeholder="Enter habit">
+        <br><br>
+        <button onclick="addHabit()">Add Habit</button>
+    </div>
+
+</div>
+
+<script>
+
+function showMessage(msg, type) {
+    const box = document.getElementById("msgBox");
+    box.innerHTML = `<div class="message ${type}">${msg}</div>`;
+    setTimeout(() => box.innerHTML = "", 3000);
+}
+
+function getHabitId(habit) {
+    return habit.habitId;
+}
+
+function loadHabits() {
+    fetch('/habit/show', {
+        method: 'GET',
+        credentials: 'include'
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Failed to fetch habits");
+        return res.json();
+    })
+    .then(data => {
+
+        let container = document.getElementById("habitList");
+        container.innerHTML = "";
+
+        if (!data.length) {
+            container.innerHTML = "<p>No pending habits 🎉</p>";
+            return;
+        }
+
+        data.forEach(habit => {
+
+            const id = getHabitId(habit);
+
+            if (!id) return;
+
+            let div = document.createElement("div");
+            div.className = "habit";
+            div.id = "habit-" + id;
+
+            div.innerHTML = `
+                <span>
+                    <span>${habit.habitName}</span>
+                    <span class="date">${habit.logDate || ""}</span>
+                </span>
+                <button onclick="completeHabit('${id}', this)">
+                    Done
+                </button>
+            `;
+
+            container.appendChild(div);
+        });
+
+    })
+    .catch(err => {
+        showMessage(err.message || "Failed to load habits", "error");
+    });
+}
+
+function addHabit() {
+    let name = document.getElementById("habitInput").value.trim();
+
+    if (!name) {
+        showMessage("Please enter a habit", "error");
+        return;
+    }
+
+    fetch('/user/habit', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ habitName: name })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Failed to add habit");
+        return res.text();
+    })
+    .then(msg => {
+        showMessage(msg, "success");
+        document.getElementById("habitInput").value = "";
+        loadHabits();
+    })
+    .catch(err => {
+        showMessage(err.message || "Failed to add habit", "error");
+    });
+}
+
+function completeHabit(id, btn) {
+
+    console.log("Clicked ID:", id);
+
+    if (!id || id === "null" || id === "undefined") {
+        showMessage("Invalid habit ID", "error");
+        return;
+    }
+
+    fetch(`/habit/update/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+    })
+    .then(async res => {
+        const text = await res.text();
+
+        if (!res.ok) throw new Error(text);
+
+        return text;
+    })
+    .then(msg => {
+
+        showMessage(msg, "success");
+
+        let div = document.getElementById("habit-" + id);
+        if (div) div.classList.add("fade-out");
+
+        setTimeout(() => {
+            loadHabits();
+        }, 300);
+
+    })
+    .catch(err => {
+        showMessage(err.message || "Failed to update habit", "error");
+    });
+}
+
+loadHabits();
+
+</script>
+
+</body>
+</html>
