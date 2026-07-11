@@ -149,7 +149,7 @@ mvn -version
 Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/MindTrail.git
+git clone https://github.com/samkum002/MindTrail.git
 ```
 
 Move into the project
